@@ -4,6 +4,10 @@
 
 A modern fan-made recompilation project for **Ridge Racer Type 4**, originally released for the **Sony PlayStation**.
 
+## Built With PSXRecomp
+
+This project is built using [PSXRecomp](https://github.com/mstan/psxrecomp), the PlayStation 1 static recompiler framework created by mstan. The framework is included in this project as a Git submodule.
+
 ## Disc Required
 
 This project **does not include the original game disc image or copyrighted assets**.
