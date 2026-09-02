@@ -18,3 +18,5 @@ disc/
 *.suo
 input/ 
 build-recompiler/
+generated/
+psx-runtime_generated_sources.txt
