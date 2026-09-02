@@ -1,0 +1,115 @@
+# Ridge Racer Type 4 - Recomp
+
+> **Work in Progress:** This recompilation project is currently under development. Features, compatibility, performance, and functionality may change as development continues.
+
+A modern fan-made recompilation project for **Ridge Racer Type 4**, originally released for the **Sony PlayStation**.
+
+## Disc Required
+
+This project **does not include the original game disc image or copyrighted assets**.
+
+To play, you must provide your **own legally obtained copy** of *Ridge Racer Type 4*.
+
+The original game disc image must **not** be uploaded to this repository or included with releases.
+
+## Features
+
+* PlayStation recompilation
+* **Work in progress / actively being developed**
+* Requires the user's own legally obtained game disc/image
+* No copyrighted game disc files are distributed with this project
+* No original game artwork, music, or other copyrighted game assets are included
+* Fullscreen support
+* Designed for modern systems
+* Keyboard controls
+* Source code intended to support community contributions
+* Bug fixes and feature improvements welcome
+
+## Controls
+
+Controls depend on the current runtime configuration.
+
+Keyboard and controller bindings may be configurable through the project's input configuration.
+
+## Building From Source
+
+This repository contains the source code, build files, game configuration, and recompilation data required to build the project.
+
+### Requirements
+
+* Git
+* CMake
+* A supported C/C++ compiler
+* Required project dependencies
+* Your own legally obtained copy of the game, if required by the build process
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/omegakatana92/RidgeRacer4Recomp.git
+cd RidgeRacer4Recomp
+```
+
+### Configure the Build
+
+```bash
+cmake -S . -B build
+```
+
+### Build
+
+```bash
+cmake --build build --config Release
+```
+
+The resulting executable will be placed in the project's build output directory.
+
+**The original game disc image is not included in this repository.**
+
+Because this project is currently under development, the build may not yet be fully functional or complete.
+
+## Contributing
+
+Contributions and improvements are welcome!
+
+Developers can **fork this repository**, make changes, test their work, and submit a **Pull Request**.
+
+Possible contributions include:
+
+* Bug fixes
+* Performance improvements
+* Controller improvements
+* Fullscreen improvements
+* Linux compatibility
+* Steam Deck compatibility
+* Build-system improvements
+* Accessibility improvements
+* Documentation improvements
+* Configuration options
+* Additional platform support
+
+Please do not submit copyrighted game disc images, game assets, music, artwork, or other proprietary game material.
+
+## Copyright
+
+**Ridge Racer Type 4**, its characters, names, artwork, music, trademarks, and other intellectual property remain the property of their respective copyright and trademark holders.
+
+This is an independent fan-made recompilation project.
+
+No original game disc images or copyrighted game assets are distributed with this project.
+
+**All rights to the original game and its associated intellectual property remain with their respective owners.**
+
+## Fullscreen
+
+Fullscreen support is available through the runtime configuration.
+
+## Disclaimer
+
+This project is currently a **work in progress** and is not considered a finished or fully playable release.
+
+This project does not distribute the original game disc image or copyrighted game assets.
+
+Users must provide their own legally obtained copy of the game.
+
+This project is an independent fan-made recompilation and is **not affiliated with or endorsed by the original game's rights holders.**
