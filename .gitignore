@@ -1,0 +1,20 @@
+# Generated files
+generated/
+bios-generated/
+build/
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+*.lib
+
+# Disc files (copyrighted)
+disc/
+
+# IDE
+.vs/
+*.user
+*.suo
+input/ 
+build-recompiler/

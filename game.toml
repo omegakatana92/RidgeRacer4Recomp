@@ -1,0 +1,31 @@
+[game]
+name = "RidgeRacer4"
+id = "SLUS-00797"
+exe = "input/SLUS_007.97"
+disc = "disc/R4 - Ridge Racer Type 4 (USA).cue"
+load_address = "0x80010000"
+entry_pc = "0x8007D8F4"
+text_size = "0x0009C000"
+stack_base = "0x801FFFF0"
+
+[recompiler]
+seeds = "seeds/functions.txt"
+strict = true
+out_dir = "generated"
+
+[runtime]
+window_title = "Ridge Racer 4 Recompiled"
+bios_hle = false
+openbios = true
+overlay_cache = true
+
+[video]
+renderer = "software"
+
+[prepare_disc]
+track_01_sha1 = "75f0dab5c1f71ba80f3d1e2fefd043f3f2b9ee2e"
+track_01_md5 = "bf1d92037b1b2be83b459c11f0b89eb6"
+track_01_size = 621421920
+
+[netplay]
+require_cue = true
