@@ -1,4 +1,4 @@
-# Generated files
+﻿# Generated files
 generated/
 bios-generated/
 build/
@@ -20,3 +20,5 @@ input/
 build-recompiler/
 generated/
 psx-runtime_generated_sources.txt
+# Launcher user settings (per-user, written to %APPDATA%\%RidgeRacer4Recomp\)
+launcher/launcher-config.json
