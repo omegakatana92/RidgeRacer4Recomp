@@ -36,10 +36,11 @@ Add-Type -AssemblyName System.Drawing
 
 # --- Locate the recompiled EXE and the bundled OpenBIOS relative to this script
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-# launcher/ is a sibling of build/. The EXE and bios/ both live under build/.
-$projectRoot = Split-Path -Parent $scriptDir
-$recompExePath = Join-Path (Join-Path $projectRoot 'build') $RecompExeName
-$bundledBiosPath = Join-Path (Join-Path (Join-Path $projectRoot 'build') 'bios') 'openbios.bin'
+# launcher/ is a sibling of the release game dir. The EXE and bios/ both live
+# directly inside the release game dir, NOT under build/.
+$gameDir = Split-Path -Parent $scriptDir
+$recompExePath = Join-Path $gameDir $RecompExeName
+$bundledBiosPath = Join-Path (Join-Path $gameDir 'bios') 'openbios.bin'
 
 # --- Config persistence -------------------------------------------------------
 function Get-ConfigDir {
@@ -256,7 +257,7 @@ $btnLaunch.Add_Click({
     if (-not (Test-Path $recompExePath)) {
         Show-Error "Recompiled executable not found:
 $recompExePath
-Make sure the build folder is intact."
+Make sure the release folder is intact."
         return
     }
 
@@ -289,7 +290,7 @@ $customBiosPath"
     } elseif (-not (Test-Path $bundledBiosPath)) {
         Show-Error "OpenBIOS is selected, but the bundled BIOS was not found at:
 $bundledBiosPath
-The build folder may be incomplete."
+The release folder may be incomplete."
         return
     }
 
