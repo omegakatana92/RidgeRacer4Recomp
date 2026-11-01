@@ -1,0 +1,86 @@
+name: Repair Windows release package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/repair-windows-release.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repair-windows-v1
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ASSET: Ridge_Racer_4_Recomp_Windows.zip
+      FRAMEWORK_PIN: 001ea94717874704a925b85be9739265e0d60477
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download and verify the existing executable
+        run: |
+          mkdir -p existing runtime
+          gh release download v1.0.0 --pattern "$ASSET" --dir existing
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import zipfile
+          with zipfile.ZipFile('existing/Ridge_Racer_4_Recomp_Windows.zip') as archive:
+              data = archive.read('Ridge_Racer_4_Recompiled.exe')
+          expected = '1f1b9ee3a61e5ae1c5b00b812b7920419045db372a4a0e9e9aabeba4298f0531'
+          assert hashlib.sha256(data).hexdigest() == expected, 'Unexpected executable; refusing to repackage'
+          Path('runtime/Ridge_Racer_4_Recompiled.exe').write_bytes(data)
+          PY
+      - name: Obtain the pinned redistributable OpenBIOS and license
+        run: |
+          mkdir -p psxrecomp/bios
+          for name in openbios.bin OpenBIOS.LICENSE; do
+            curl --fail --location --retry 3 "https://raw.githubusercontent.com/omegakatana92/psxrecomp/$FRAMEWORK_PIN/bios/$name" --output "psxrecomp/bios/$name"
+          done
+      - name: Test and package
+        run: |
+          python -m unittest discover -s tests -v
+          python tools/package_windows.py --exe runtime/Ridge_Racer_4_Recompiled.exe --output "dist/$ASSET"
+          python - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('dist/Ridge_Racer_4_Recomp_Windows.zip') as archive:
+              assert archive.testzip() is None
+              assert len(archive.namelist()) == 7
+              assert archive.getinfo('bios/openbios.bin').file_size == 524288
+              print('\n'.join(archive.namelist()))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-with-OpenBIOS
+          path: dist/Ridge_Racer_4_Recomp_Windows.zip
+      - name: Replace the incomplete Windows asset
+        run: |
+          gh release upload v1.0.0 "dist/$ASSET" --clobber
+          gh release view v1.0.0 --json body --jq .body > release-notes.md
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('release-notes.md')
+          text = path.read_text()
+          marker = '## Windows OpenBIOS packaging repair'
+          if marker not in text:
+              text += '\n\n' + marker + '\n\nThe Windows ZIP has been repackaged to include bios/openbios.bin, OpenBIOS.LICENSE, game.toml, the Windows launcher, and setup instructions. The game executable is unchanged. Re-download and extract the entire ZIP, then run launcher/ridgeRacer4.bat and select your legally obtained CUE/BIN dump. No game disc or Sony retail BIOS is included. See the bundled README for OpenBIOS and Custom BIOS setup.\n'
+          path.write_text(text)
+          PY
+          gh release edit v1.0.0 --notes-file release-notes.md
+      - name: Verify the published download
+        run: |
+          mkdir -p verify
+          gh release download v1.0.0 --pattern "$ASSET" --dir verify
+          cmp "dist/$ASSET" "verify/$ASSET"
+          sha256sum "verify/$ASSET"
