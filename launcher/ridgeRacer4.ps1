@@ -14,10 +14,10 @@
 #     release folder can be moved to any Windows PC.
 #   * Configuration (last CUE, BIOS mode, custom BIOS path) is persisted in
 #     %APPDATA%\RidgeRacer4Recomp\launcher-config.json (per-user). Falls back
-#     to a config.json next to the launcher if %APPDATA% is unavailable.
+#     to launcher-config.json next to the launcher if %APPDATA% is unavailable.
 #   * Never bundles or copies a game disc image or retail BIOS.
-#   * The bundled OpenBIOS (bios\openbios.bin) is the default and the only
-#     BIOS shipped with the release.
+#   * OpenBIOS is loaded from bios\openbios.bin when present. Older release
+#     archives may omit it; report that explicitly instead of claiming inclusion.
 #   * The launched process uses the directory containing the selected CUE
 #     as its WorkingDirectory, because multi-track CUE files reference the
 #     track .bin files with relative FILE entries. Using the build directory
@@ -36,8 +36,7 @@ Add-Type -AssemblyName System.Drawing
 
 # --- Locate the recompiled EXE and the bundled OpenBIOS relative to this script
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-# launcher/ is a sibling of the release game dir. The EXE and bios/ both live
-# directly inside the release game dir, NOT under build/.
+# launcher/ lives inside the release root. The EXE and bios/ are its siblings.
 $gameDir = Split-Path -Parent $scriptDir
 $recompExePath = Join-Path $gameDir $RecompExeName
 $bundledBiosPath = Join-Path (Join-Path $gameDir 'bios') 'openbios.bin'
@@ -101,7 +100,7 @@ $form.MaximizeBox = $false
 # Top info label
 $lblInfo = New-Object System.Windows.Forms.Label
 $lblInfo.Text = "Select your legally obtained Ridge Racer Type 4 disc image (.cue).
-Choose OpenBIOS (bundled) or your own legally obtained PS1 BIOS. Click Launch Game to start."
+Choose OpenBIOS (if installed) or your own legally obtained PS1 BIOS. Click Launch Game to start."
 $lblInfo.Location = New-Object System.Drawing.Point(16, 12)
 $lblInfo.Size = New-Object System.Drawing.Size(720, 40)
 $lblInfo.AutoSize = $false
@@ -115,7 +114,8 @@ $grpBios.Size = New-Object System.Drawing.Size(720, 90)
 $form.Controls.Add($grpBios)
 
 $rbOpenBIOS = New-Object System.Windows.Forms.RadioButton
-$rbOpenBIOS.Text = 'OpenBIOS (Included)'
+$openBiosAvailable = Test-Path -LiteralPath $bundledBiosPath -PathType Leaf
+$rbOpenBIOS.Text = $(if ($openBiosAvailable) { 'OpenBIOS (available)' } else { 'OpenBIOS (missing - see README)' })
 $rbOpenBIOS.Location = New-Object System.Drawing.Point(16, 24)
 $rbOpenBIOS.AutoSize = $true
 $rbOpenBIOS.Checked = $true
@@ -254,7 +254,7 @@ $btnLaunch.Add_Click({
     $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(0, 90, 0)
     $lblStatus.Text = ''
 
-    if (-not (Test-Path $recompExePath)) {
+    if (-not (Test-Path -LiteralPath $recompExePath -PathType Leaf)) {
         Show-Error "Recompiled executable not found:
 $recompExePath
 Make sure the release folder is intact."
@@ -267,11 +267,18 @@ Make sure the release folder is intact."
         Show-Error 'Please select your legally obtained game disc CUE file first.'
         return
     }
-    if (-not (Test-Path $cuePath)) {
+    if (-not (Test-Path -LiteralPath $cuePath -PathType Leaf)) {
         Show-Error "The selected CUE file does not exist:
 $cuePath"
         return
     }
+
+    if ([System.IO.Path]::GetExtension($cuePath) -ine '.cue') {
+        Show-Error 'Select the .cue file, not an individual .bin track.'
+        return
+    }
+    # Resolve user-entered relative paths before changing the child's directory.
+    $cuePath = (Resolve-Path -LiteralPath $cuePath).ProviderPath
 
     # --- Resolve BIOS
     $useCustom = $rbCustom.Checked
@@ -282,16 +289,25 @@ $cuePath"
             Show-Error 'Custom BIOS is selected. Please choose a legally obtained PS1 BIOS file (e.g. SCPH1001.BIN).'
             return
         }
-        if (-not (Test-Path $customBiosPath)) {
+        if (-not (Test-Path -LiteralPath $customBiosPath -PathType Leaf)) {
             Show-Error "The selected BIOS file does not exist:
 $customBiosPath"
             return
         }
-    } elseif (-not (Test-Path $bundledBiosPath)) {
+    } elseif (-not (Test-Path -LiteralPath $bundledBiosPath -PathType Leaf)) {
         Show-Error "OpenBIOS is selected, but the bundled BIOS was not found at:
 $bundledBiosPath
-The release folder may be incomplete."
+This release is missing OpenBIOS. See README.md for the required layout.
+Restore bios\openbios.bin from the pinned PSXRecomp submodule with its license,
+or select Custom BIOS and browse to your own legally obtained supported dump."
         return
+    }
+
+    if ($useCustom) {
+        $customBiosPath = (Resolve-Path -LiteralPath $customBiosPath).ProviderPath
+        $biosPath = $customBiosPath
+    } else {
+        $biosPath = (Resolve-Path -LiteralPath $bundledBiosPath).ProviderPath
     }
 
     # --- Persist config
@@ -302,13 +318,9 @@ The release folder may be incomplete."
     }
 
     # --- Build the runtime command line
-    # The current PSXRecomp runtime supports --bios <path> on the command line.
-    # When OpenBIOS is selected, we omit --bios so the runtime uses its bundled
-    # default (bios\openbios.bin relative to the executable's working directory).
-    $argList = @('--disc', $cuePath)
-    if ($useCustom) {
-        $argList = @('--bios', $customBiosPath, '--disc', $cuePath)
-    }
+    # Always pass the selected BIOS explicitly. The CUE directory is intentionally
+    # the working directory; it must not change which BIOS the runtime loads.
+    $argList = @('--bios', $biosPath, '--disc', $cuePath)
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $recompExePath

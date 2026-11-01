@@ -1,4 +1,4 @@
-﻿# Ridge Racer Type 4 - Recomp
+# Ridge Racer Type 4 - Recomp
 
 > **Work in Progress:** This recompilation project is currently under development. Features, compatibility, performance, and functionality may change as development continues.
 
@@ -36,35 +36,174 @@ Controls depend on the current runtime configuration.
 Keyboard and controller bindings may be configurable through the project's input configuration.
 
 
-## Launcher (Windows)
+## First run: download versus source checkout
 
-A small Windows GUI launcher is included under `launcher\`:
+Download the platform asset from [Releases](https://github.com/omegakatana92/RidgeRacer4Recomp/releases).
+GitHub's automatic **Source code** ZIP is not a runnable release and does not
+contain Git submodule contents, generated code, or OpenBIOS.
 
-* `launcher\ridgeRacer4.bat` â€” double-click to start.
-* `launcher\ridgeRacer4.ps1` â€” the actual PowerShell + WinForms GUI.
+**Known v1.0.0 Windows packaging problem (issue #2):**
+`Ridge_Racer_4_Recomp_Windows.zip` contains only
+`Ridge_Racer_4_Recompiled.exe`. It omits the external OpenBIOS image, launcher,
+configuration, and instructions. The old “OpenBIOS (Included)” wording describes
+an intended layout, not that ZIP's contents. Updating this repository does not
+replace already published downloads. The v1.0.0 Linux AppImage does contain
+`bios/openbios.bin` and its license in its payload.
 
-The launcher lets you:
+### Windows folder layout and setup
 
-1. Pick your legally obtained Ridge Racer 4 `.cue` file (Browse...).
-2. Choose **OpenBIOS (Included)** (the default) or **Custom BIOS** and point at your own legally obtained PS1 BIOS file.
-3. Click **Launch Game**.
+Extract the entire release into a writable folder; do not run inside the ZIP.
+The Windows launcher expects this layout (the EXE and `bios/` are siblings of
+`launcher/`, not inside it):
 
-Your last selections (CUE path, BIOS mode, custom BIOS path) are remembered in
-`%APPDATA%\%RidgeRacer4Recomp\launcher-config.json` and re-loaded the next time
-the launcher starts.
+```text
+RidgeRacer4Recomp/
+  Ridge_Racer_4_Recompiled.exe
+  game.toml
+  README.md
+  launcher/
+    ridgeRacer4.bat
+    ridgeRacer4.ps1
+  bios/
+    openbios.bin
+    OpenBIOS.LICENSE
+```
 
-The launcher resolves the recompiled executable and the bundled OpenBIOS
-relative to its own location, so the release folder can be moved anywhere on
-the PC without breaking the launch.
+To repair the old Windows ZIP, keep its executable and copy `game.toml`,
+`README.md`, and both `launcher/` files from this repository into the layout
+above. For OpenBIOS, initialize this repository's pinned submodule:
 
-> **Why the launcher's working directory is the CUE's folder, not the build folder:** PSX CUE files frequently reference their track `.bin` files with relative `FILE` entries. The launched process therefore uses the directory containing the selected CUE as its working directory, so those relative `FILE` entries resolve.
+```powershell
+git clone --recurse-submodules https://github.com/omegakatana92/RidgeRacer4Recomp.git
+# For an existing checkout, run inside it instead:
+# git submodule update --init --recursive
+```
 
-The launcher is a thin convenience wrapper; it does **not** bundle, copy, or
-distribute any game disc image, track, or retail BIOS.
+Copy **only** `psxrecomp/bios/openbios.bin` and
+`psxrecomp/bios/OpenBIOS.LICENSE` into the release's `bios/` directory.
+Do not rename a retail BIOS to `openbios.bin`. Alternatively, choose Custom
+BIOS in the launcher; that mode does not require `openbios.bin`.
+
+1. Keep your own legally obtained game dump in a separate writable directory,
+   for example `C:\Games\R4-disc\`. Keep the `.cue` and **every** referenced
+   `.bin` track together, preserving the names and relative subfolders in the
+   CUE's `FILE` entries. Do not put game files in `bios/` or upload them here.
+   The project configuration targets the USA release, **SLUS-00797**; other
+   regions/revisions are not established as compatible.
+2. Double-click `launcher\ridgeRacer4.bat` (Windows PowerShell 5.1 and WinForms).
+   Use Browse to select your `.cue`, not a track `.bin` or ZIP.
+3. Select **OpenBIOS** if `bios\openbios.bin` is installed, or select **Custom
+   BIOS**, then Browse to your own legally obtained supported PS1 BIOS dump.
+   The launcher now reports OpenBIOS as available or missing rather than
+   promising that every download includes it.
+4. Click **Launch Game**. Missing files are reported with their expected paths.
+   If the runtime rejects a custom BIOS, see the compatibility note below.
+
+Selections are saved in `%APPDATA%\RidgeRacer4Recomp\launcher-config.json`;
+if ApplicationData is unavailable, the fallback is `launcher-config.json`
+beside the PowerShell script. Browse again after moving your game dump or
+custom BIOS. Moving the whole release keeps its EXE/OpenBIOS paths valid.
+
+The launcher resolves the EXE and OpenBIOS from the release root and passes
+an **absolute `--bios` path in both modes**, plus an absolute `--disc` path.
+It uses the selected CUE's directory as the child's working directory for
+relative track references. BIOS discovery therefore does not depend on where
+the disc is stored or where the launcher was opened.
+
+For troubleshooting without the wrapper, open PowerShell and use absolute
+paths (replace these examples with your actual paths):
+
+```powershell
+Set-Location 'C:\Games\R4-disc'
+& 'C:\Games\RidgeRacer4Recomp\Ridge_Racer_4_Recompiled.exe' --bios 'C:\Games\RidgeRacer4Recomp\bios\openbios.bin' --disc 'C:\Games\R4-disc\R4.cue'
+```
+
+For a custom BIOS, replace the `--bios` value with its absolute path. Starting
+from a terminal also makes runtime errors visible if the GUI closes quickly.
+
+### OpenBIOS versus a custom BIOS
+
+OpenBIOS is the PCSX-Redux project's freely licensed replacement BIOS, not a
+Sony retail BIOS dump. Use the version supplied by the pinned PSXRecomp
+submodule and retain `OpenBIOS.LICENSE` when redistributing it. Recompiled BIOS
+code in an executable does not imply the external BIOS image was packaged.
+
+Custom BIOS mode passes your selected dump to the runtime; it does not copy,
+download, or redistribute it. A file existing on disk does **not** guarantee
+compatibility: the runtime validates BIOS identity and the native BIOS
+backends compiled into that build. The pinned framework recognizes SCPH1001
+(512 KiB, CRC32 `37157331`), but a release may still require regeneration and
+rebuilding for a different BIOS backend. If you see “not compiled into the
+current build,” use the matching OpenBIOS image or rebuild with the supported
+backend; renaming the file will not fix it. No retail BIOS is provided here.
+
+### Linux / Steam Deck AppImage
+
+The published v1.0.0 AppImage includes OpenBIOS and its license under
+`usr/share/ridgeracer4recomp/bios/`. Its `AppRun` copies these into writable user
+storage before launching. The default location is
+`~/.local/share/RidgeRacer4Recomp`; `$XDG_DATA_HOME/RidgeRacer4Recomp` takes
+precedence, and `RIDGERACER4_DATA_DIR` overrides both.
+
+Keep your legal CUE/BIN dump outside the AppImage, for example in
+`/home/deck/Games/R4-disc/`, with the same track-layout rules as Windows.
+In Desktop Mode, mark the AppImage executable and launch with an absolute disc
+path to override the development disc path in `game.toml`:
+
+```bash
+chmod +x '/home/deck/Downloads/Ridge_Racer_4_Recomp-v1.0.0-linux-x86_64.AppImage'
+'/home/deck/Downloads/Ridge_Racer_4_Recomp-v1.0.0-linux-x86_64.AppImage' --disc '/home/deck/Games/R4-disc/R4.cue'
+```
+
+The runtime UI may also ask you to select the CUE. For Custom BIOS, append
+`--bios '/absolute/path/to/your/BIOS.BIN'`; the same backend compatibility limits
+apply. Do not replace the AppImage-managed `bios/openbios.bin` with a retail
+dump: `AppRun` refreshes bundled BIOS files each launch. For Steam, add the
+AppImage as a non-Steam game and put `--disc "/home/deck/Games/R4-disc/R4.cue"`
+in Launch Options. Run once in Desktop Mode first to check any errors.
+
+### Troubleshooting
+
+* **OpenBIOS missing:** check the exact path shown by the Windows launcher.
+  The original v1.0.0 Windows ZIP needs the repair steps above.
+* **Executable missing:** preserve the folder tree; placing the launcher next
+  to the EXE instead of under `launcher/` changes its expected root.
+* **Disc/track missing:** select a CUE from your extracted dump, then check its
+  `FILE` entries against all track filenames. A CUE alone contains no game data.
+* **Custom BIOS rejected:** check runtime compatibility, not just its filename.
+* **Still fails:** report your OS, release asset name, selected BIOS mode,
+  folder layout, and terminal error text in issue #2. Do not attach disc images
+  or retail BIOS files. These setup steps are not a guarantee of full playability.
+
+### Packaging a Windows release (maintainers)
+
+Initialize the pinned submodule, build the Windows runtime, then use Python 3:
+
+```powershell
+python tools/package_windows.py --exe 'build/Release/Ridge_Racer_4_Recompiled.exe' --output 'dist/Ridge_Racer_4_Recomp_Windows.zip'
+```
+
+Pass the actual executable output path if it differs. The script packages an
+explicit list of required support files, using only the pinned submodule's
+OpenBIOS image and license. It refuses missing/empty inputs and never copies
+`disc/`, `input/`, user settings, or arbitrary BIOS folders. If the runtime build
+needs additional redistributable dependencies, stage and verify those separately.
+
+Before publishing, extract the ZIP into a clean folder with spaces in its
+name, launch from a different working directory, and select a CUE stored
+outside the release. Verify OpenBIOS mode, missing-OpenBIOS feedback, and
+Custom BIOS selection (including a rejected/unsupported BIOS). Check that no
+game dump or retail BIOS entered the archive. Rebuild the downloadable asset;
+merging a README/launcher change alone cannot fix the old ZIP.
 
 ## Building From Source
 
-This repository contains the source code, build files, game configuration, and recompilation data required to build the project.
+This checkout contains build files, game configuration, and function seeds.
+It does not contain `generated/` or `bios-generated/`, which CMake expects.
+Initialize the pinned PSXRecomp submodule and generate the game and matching
+OpenBIOS sources with that framework before configuring CMake. The commands
+below are configure/build steps, not a complete generation recipe; a fresh
+clone alone is not a ready-to-build or runnable release.
 
 ### Requirements
 
@@ -77,7 +216,7 @@ This repository contains the source code, build files, game configuration, and r
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/omegakatana92/RidgeRacer4Recomp.git
+git clone --recurse-submodules https://github.com/omegakatana92/RidgeRacer4Recomp.git
 cd RidgeRacer4Recomp
 ```
 
