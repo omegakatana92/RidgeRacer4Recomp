@@ -42,12 +42,14 @@ Download the platform asset from [Releases](https://github.com/omegakatana92/Rid
 GitHub's automatic **Source code** ZIP is not a runnable release and does not
 contain Git submodule contents, generated code, or OpenBIOS.
 
-**Known v1.0.0 Windows packaging problem (issue #2):**
-`Ridge_Racer_4_Recomp_Windows.zip` contains only
-`Ridge_Racer_4_Recompiled.exe`. It omits the external OpenBIOS image, launcher,
+**Original v1.0.0 Windows packaging problem (issue #2):**
+Before the packaging repair, `Ridge_Racer_4_Recomp_Windows.zip` contained only
+`Ridge_Racer_4_Recompiled.exe`. It omitted the external OpenBIOS image, launcher,
 configuration, and instructions. The old “OpenBIOS (Included)” wording describes
-an intended layout, not that ZIP's contents. Updating this repository does not
-replace already published downloads. The v1.0.0 Linux AppImage does contain
+an intended layout, not the original ZIP's contents. The release packaging
+workflow replaces that download with the complete layout below; check the
+release notes for its completion. If your ZIP contains just an EXE, re-download
+it after the repair or use the manual repair steps below. The v1.0.0 Linux AppImage does contain
 `bios/openbios.bin` and its license in its payload.
 
 ### Windows folder layout and setup
