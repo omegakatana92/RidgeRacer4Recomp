@@ -1,0 +1,77 @@
+{
+  "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
+  "format": 1,
+  "name": "Ridge Racer Type 4 Recomp",
+  "repo": "omegakatana92/RidgeRacer4Recomp",
+  "inputs": [
+    {
+      "id": "game",
+      "label": "Your disc image of the USA release (SLUS-00797): pick its .cue file, with its .bin tracks beside it, or a .chd.",
+      "formats": [{ "type": "file", "extensions": ["cue", "chd", "bin", "iso"] }],
+      "check": { "ids": ["SLUS-00797"] }
+    }
+  ],
+  "start": {
+    "program": ["Ridge_Racer_4_Recompiled.exe", "Ridge_Racer_4_Recomp-linux-x86_64.AppImage"],
+    "args": ["--disc", "{input:game}"]
+  },
+  "config": [
+    {
+      "id": "main",
+      "format": "toml",
+      "file": [
+        { "path": "{install}/settings.toml", "if": "{install}/Ridge_Racer_4_Recompiled.exe" },
+        { "path": "{data}/settings.toml" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "id": "fullscreen",
+      "label": "Window Mode",
+      "group": "Video",
+      "help": "Borderless covers the screen without changing its resolution.",
+      "choices": [
+        { "label": "Windowed", "set": { "video/fullscreen": "0" } },
+        { "label": "Borderless", "set": { "video/fullscreen": "1" } },
+        { "label": "Fullscreen", "set": { "video/fullscreen": "2" } }
+      ],
+      "defaults": { "video/fullscreen": "0" }
+    },
+    {
+      "id": "vsync",
+      "label": "V-Sync",
+      "group": "Video",
+      "help": "Waits for the screen's refresh, so the picture doesn't tear.",
+      "choices": [
+        { "label": "On", "set": { "video/vsync": "\"on\"" } },
+        { "label": "Off", "set": { "video/vsync": "\"immediate\"" } }
+      ],
+      "defaults": { "video/vsync": "\"on\"" }
+    }
+  ],
+  "saves": [
+    "{data}/saves",
+    "{data}/settings.toml",
+    "{install}/card1.mcd",
+    "{install}/card2.mcd",
+    "{install}/*.options",
+    "{install}/openbios",
+    "{install}/scph1001",
+    "{install}/settings.toml"
+  ],
+  "folders": {
+    "saves": [
+      { "path": "{install}", "if": "{install}/Ridge_Racer_4_Recompiled.exe" },
+      { "path": "{data}/saves", "if": "{data}/.copied-from-user-data" },
+      { "path": "{local}/RidgeRacer4Recomp", "if": "{local}/RidgeRacer4Recomp/card1.mcd" },
+      { "path": "{data}/saves" }
+    ]
+  },
+  "actions": [
+    { "id": "saves", "label": "Saves", "help": "Your memory cards and save states.", "open": "saves" }
+  ],
+  "system": {
+    "linux": { "glibc": "2.38" }
+  }
+}
