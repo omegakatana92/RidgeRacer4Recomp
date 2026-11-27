@@ -1,5 +1,7 @@
 # Ridge Racer Type 4 - Recomp
 
+<a href="https://recomplauncher.com/game/ridgeracer4recomp"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+
 > **Work in Progress:** This recompilation project is currently under development. Features, compatibility, performance, and functionality may change as development continues.
 
 A modern fan-made recompilation project for **Ridge Racer Type 4**, originally released for the **Sony PlayStation**.
