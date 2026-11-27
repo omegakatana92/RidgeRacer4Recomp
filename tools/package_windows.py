@@ -16,6 +16,7 @@ def package(exe: Path, output: Path, root: Path = ROOT) -> None:
         'Ridge_Racer_4_Recompiled.exe': exe,
         'game.toml': root / 'game.toml',
         'README.md': root / 'README.md',
+        'recomplauncher.json': root / 'recomplauncher.json',
         'launcher/ridgeRacer4.bat': root / 'launcher/ridgeRacer4.bat',
         'launcher/ridgeRacer4.ps1': root / 'launcher/ridgeRacer4.ps1',
         'bios/openbios.bin': root / 'psxrecomp/bios/openbios.bin',

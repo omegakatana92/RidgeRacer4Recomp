@@ -1,5 +1,7 @@
 # Ridge Racer Type 4 - Recomp
 
+<a href="https://recomplauncher.com/game/ridgeracer4recomp"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+
 > **Work in Progress:** This recompilation project is currently under development. Features, compatibility, performance, and functionality may change as development continues.
 
 A modern fan-made recompilation project for **Ridge Racer Type 4**, originally released for the **Sony PlayStation**.
@@ -145,7 +147,11 @@ The published v1.0.0 AppImage includes OpenBIOS and its license under
 `usr/share/ridgeracer4recomp/bios/`. Its `AppRun` copies these into writable user
 storage before launching. The default location is
 `~/.local/share/RidgeRacer4Recomp`; `$XDG_DATA_HOME/RidgeRacer4Recomp` takes
-precedence, and `RIDGERACER4_DATA_DIR` overrides both.
+precedence, and `RIDGERACER4_DATA_DIR` overrides both. When RecompLauncher
+starts the game it uses the launcher's data folder (`RECOMPLAUNCHER_DATA`)
+instead, with memory cards and save states in its `saves/`. The first such
+start copies your settings, input files, memory cards and save states there
+from the usual folder, which is left as it is.
 
 Keep your legal CUE/BIN dump outside the AppImage, for example in
 `/home/deck/Games/R4-disc/`, with the same track-layout rules as Windows.

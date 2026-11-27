@@ -15,7 +15,7 @@ class PackagingTests(unittest.TestCase):
     def test_required_files_only_and_reject_missing_or_substituted_bios(self):
         with tempfile.TemporaryDirectory(prefix='R4 release ') as tmp:
             root = Path(tmp)
-            required = ['game.toml', 'README.md', 'launcher/ridgeRacer4.bat',
+            required = ['game.toml', 'README.md', 'recomplauncher.json', 'launcher/ridgeRacer4.bat',
                         'launcher/ridgeRacer4.ps1', 'psxrecomp/bios/openbios.bin',
                         'psxrecomp/bios/OpenBIOS.LICENSE', 'game.exe']
             bios = b'\0' * (512 * 1024)  # synthetic data; no BIOS or game data in tests
@@ -37,7 +37,7 @@ class PackagingTests(unittest.TestCase):
                 packager.package(root / 'game.exe', output, root)
                 with zipfile.ZipFile(output) as archive:
                     self.assertEqual(set(archive.namelist()), {
-                        'Ridge_Racer_4_Recompiled.exe', 'game.toml', 'README.md',
+                        'Ridge_Racer_4_Recompiled.exe', 'game.toml', 'README.md', 'recomplauncher.json',
                         'launcher/ridgeRacer4.bat', 'launcher/ridgeRacer4.ps1',
                         'bios/openbios.bin', 'bios/OpenBIOS.LICENSE'})
                     self.assertIsNone(archive.testzip())

@@ -56,7 +56,8 @@ jobs:
           import zipfile
           with zipfile.ZipFile('dist/Ridge_Racer_4_Recomp_Windows.zip') as archive:
               assert archive.testzip() is None
-              assert len(archive.namelist()) == 7
+              assert len(archive.namelist()) == 8
+              assert 'recomplauncher.json' in archive.namelist()
               assert archive.getinfo('bios/openbios.bin').file_size == 524288
               print('\n'.join(archive.namelist()))
           PY
