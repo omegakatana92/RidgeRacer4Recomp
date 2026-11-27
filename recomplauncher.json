@@ -58,7 +58,13 @@
     "{install}/*.options",
     "{install}/openbios",
     "{install}/scph1001",
-    "{install}/settings.toml"
+    "{install}/settings.toml",
+    "{local}/RidgeRacer4Recomp/card1.mcd",
+    "{local}/RidgeRacer4Recomp/card2.mcd",
+    "{local}/RidgeRacer4Recomp/*.options",
+    "{local}/RidgeRacer4Recomp/openbios",
+    "{local}/RidgeRacer4Recomp/scph1001",
+    "{local}/RidgeRacer4Recomp/settings.toml"
   ],
   "folders": {
     "saves": [
