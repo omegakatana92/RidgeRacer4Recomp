@@ -6,12 +6,126 @@ if [ -z "${APPDIR:-}" ]; then
     exit 1
 fi
 
+user_data_dir=""
+if [ -n "${XDG_DATA_HOME:-}" ]; then
+    user_data_dir="$XDG_DATA_HOME/RidgeRacer4Recomp"
+elif [ -n "${HOME:-}" ]; then
+    user_data_dir="$HOME/.local/share/RidgeRacer4Recomp"
+fi
+
+# RecompLauncher passes the game's own data folder in RECOMPLAUNCHER_DATA.
+# The first start there copies what the player already has in the usual
+# folder: settings and input files keep their names, memory cards and save
+# states go in saves/. Each item is copied to <name>.part and renamed into
+# place, and its name is journaled first so a failed or cut-off copy can take
+# back exactly what it put there. The marker, written last, is the only sign
+# the copy is done; until then the game keeps playing from the usual folder.
+# The usual folder is never changed.
+copy_marker=".copied-from-user-data"
+copy_journal=".copy-journal"
+
+copy_item() {
+    copy_src="$1/$3"
+    copy_dst="$2/$4"
+    if [ "$5" = clean ]; then
+        rm -rf "$copy_dst.part"
+        return
+    fi
+    if [ ! -e "$copy_src" ] && [ ! -L "$copy_src" ]; then
+        return 0
+    fi
+    if [ "$5" != replace ] && { [ -e "$copy_dst" ] || [ -L "$copy_dst" ]; }; then
+        return 0
+    fi
+    rm -rf "$copy_dst.part" &&
+        mkdir -p "$(dirname "$copy_dst")" &&
+        cp -a "$copy_src" "$copy_dst.part" &&
+        printf '%s\n' "$4" >> "$2/$copy_journal" &&
+        mv -f "$copy_dst.part" "$copy_dst"
+}
+
+copy_items() {
+    # settings.toml replaces the one the launcher wrote before this start.
+    if [ "$3" = copy ]; then settings_mode=replace; else settings_mode="$3"; fi
+    copy_item "$1" "$2" settings.toml settings.toml "$settings_mode" || return 1
+    for copy_name in input.ini keybinds.ini config.ini disc.cfg bios.cfg \
+            overlay_captures.json mods; do
+        copy_item "$1" "$2" "$copy_name" "$copy_name" "$3" || return 1
+    done
+    for copy_name in card1.mcd card2.mcd .pst_bios_isolated openbios scph1001; do
+        copy_item "$1" "$2" "$copy_name" "saves/$copy_name" "$3" || return 1
+    done
+    if [ "$3" = clean ]; then
+        rm -rf "$2"/saves/*.options.part
+        return
+    fi
+    for copy_path in "$1"/*.options; do
+        [ -e "$copy_path" ] || continue
+        copy_name=${copy_path##*/}
+        copy_item "$1" "$2" "$copy_name" "saves/$copy_name" "$3" || return 1
+    done
+}
+
+copy_undo() {
+    if [ -f "$1/$copy_journal" ]; then
+        while IFS= read -r copy_name; do
+            [ -n "$copy_name" ] && rm -rf "$1/$copy_name"
+        done < "$1/$copy_journal"
+        rm -f "$1/$copy_journal"
+    fi
+    copy_items "" "$1" clean
+}
+
+# Returns 0 once the marker is written (now or on an earlier start).
+copy_user_data() {
+    [ -f "$2/$copy_marker" ] && return 0
+    mkdir -p "$2" || return 1
+    copy_lock=""
+    if command -v flock >/dev/null 2>&1; then
+        # The lock is held by this process only, so a start that is killed
+        # never leaves it behind.
+        ( : > "$2/.copy-lock" ) 2>/dev/null || return 1
+        exec 9>"$2/.copy-lock"
+        copy_lock=1
+        if ! flock -w 60 9; then
+            exec 9>&-
+            return 1
+        fi
+    fi
+    copy_ok=0
+    if [ -f "$2/$copy_marker" ]; then
+        copy_ok=1
+    else
+        copy_undo "$2"
+        if { [ -z "$1" ] || [ ! -d "$1" ] || copy_items "$1" "$2" copy; } &&
+                : > "$2/$copy_marker"; then
+            rm -f "$2/$copy_journal"
+            copy_ok=1
+        else
+            copy_undo "$2"
+        fi
+    fi
+    if [ -n "$copy_lock" ]; then exec 9>&-; fi
+    [ "$copy_ok" = 1 ]
+}
+
+launcher_data=""
 if [ -n "${RIDGERACER4_DATA_DIR:-}" ]; then
     data_dir="$RIDGERACER4_DATA_DIR"
-elif [ -n "${XDG_DATA_HOME:-}" ]; then
-    data_dir="$XDG_DATA_HOME/RidgeRacer4Recomp"
-elif [ -n "${HOME:-}" ]; then
-    data_dir="$HOME/.local/share/RidgeRacer4Recomp"
+elif [ -n "${RECOMPLAUNCHER_DATA:-}" ] &&
+        ! { [ -n "$user_data_dir" ] && [ "$RECOMPLAUNCHER_DATA" -ef "$user_data_dir" ]; }; then
+    if copy_user_data "$user_data_dir" "$RECOMPLAUNCHER_DATA"; then
+        data_dir="$RECOMPLAUNCHER_DATA"
+        launcher_data=1
+    elif [ -n "$user_data_dir" ]; then
+        echo "Ridge Racer 4 Recompiled: could not copy $user_data_dir into $RECOMPLAUNCHER_DATA; playing from $user_data_dir this time." >&2
+        data_dir="$user_data_dir"
+    else
+        echo "Ridge Racer 4 Recompiled: could not set up $RECOMPLAUNCHER_DATA." >&2
+        exit 1
+    fi
+elif [ -n "$user_data_dir" ]; then
+    data_dir="$user_data_dir"
 else
     echo "Ridge Racer 4 Recompiled: HOME is not set." >&2
     exit 1
@@ -81,6 +195,10 @@ unset APPIMAGE
 export PATH="$APPDIR/usr/bin${PATH:+:$PATH}"
 export LD_LIBRARY_PATH="$APPDIR/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="$APPDIR/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+
+if [ -n "$launcher_data" ]; then
+    set -- --memcard-dir "$data_dir/saves" "$@"
+fi
 
 cd "$data_dir"
 exec "$launcher" --game "$data_dir/game.toml" "$@"
